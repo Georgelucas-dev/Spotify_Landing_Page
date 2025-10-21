@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spotify Landing Page</title>
+  <link rel="stylesheet" href="output.css">
+</head>
+<body class="bg-black text-white min-h-screen">
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold text-green-500 mb-8 text-center">Artista Spotify</h1>
+    <div id="artist-info" class="max-w-2xl mx-auto bg-gray-900 rounded-lg p-6"></div>
+  </div>
+
+  <script>
+    async function getArtistData() {
+      try {
+        // 1️⃣ Pega o token do nosso backend
+        const tokenRes = await fetch('http://localhost:3000/token');
+        const tokenData = await tokenRes.json();
+        const accessToken = tokenData.access_token;
+
+        // 2️⃣ Usa o token pra buscar dados de um artista (ex: Ed Sheeran)
+        const artistId = '6eUKZXaKkcviH0Ku9w2n3V'; // Ed Sheeran
+        const artistRes = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+        const artist = await artistRes.json();
+
+        // 3️⃣ Mostra os dados na página
+        const div = document.getElementById('artist-info');
+        div.innerHTML = `
+          <h2>${artist.name}</h2>
+          <p>Followers: ${artist.followers.total.toLocaleString()}</p>
+          <p>Genres: ${artist.genres.join(', ')}</p>
+          <img src="${artist.images[0].url}" width="200">
+        `;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    getArtistData();
+  </script>
+</body>
+</html>
