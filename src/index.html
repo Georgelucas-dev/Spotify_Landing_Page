@@ -4,45 +4,229 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Spotify Landing Page</title>
+  <link rel="shortcut icon" href="../assets/Spotify_logo.png" type="image/x-icon">
   <link rel="stylesheet" href="output.css">
 </head>
-<body class="bg-black text-white min-h-screen">
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-4xl font-bold text-green-500 mb-8 text-center">Artista Spotify</h1>
-    <div id="artist-info" class="max-w-2xl mx-auto bg-gray-900 rounded-lg p-6"></div>
+<body class="bg-[#1db954] text-white h-screen overflow-hidden box-border">
+  <div class="flex h-full w-full">
+
+    <aside class="md:flex hidden flex-col md:w-32 bg-[#121212] h-full items-center py-6 justify-between">
+      <img class="h-16 w-16" src="../assets/Spotify_logo.png" alt="Spotify's Logo">
+      <div class="flex flex-col w-full items-center">
+        <button id="#artistas" class="menu-button">Artistas</button>
+        <button id="#musicas" class="menu-button">Músicas</button>
+        <button id="#albuns" class="menu-button">Albuns</button>
+      </div>
+      <a href="https://github.com/Georgelucas-dev"><img class="h-16 w-16" src="../assets/github-mark-white.png" alt=""></a>
+    </aside>
+
+    <!--Container com várias seções-->
+    <main class="bg-[#212121] w-screen min-h-screen h-screen p-10 overflow-auto gap-10 flex flex-col scroll-smooth">
+
+      <div id="artista" class="w-full min-h-screen h-auto">
+        <h1 class="text-4xl mb-4">Top Artists</h1>
+        <div id="container-artists" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <!-- Os artistas serão renderizados aqui -->
+        </div>
+      </div>
+
+      <div id="musicas" class="w-full min-h-screen h-auto">
+        <h1 class="text-4xl mb-4">Top Songs</h1>
+        <div id="container-songs" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <!-- As músicas serão renderizadas aqui -->
+        </div>
+
+    </main>
   </div>
 
+
+
+
+
+
+
   <script>
-    async function getArtistData() {
+    async function getMultipleArtistsData() {
       try {
         // 1️⃣ Pega o token do nosso backend
         const tokenRes = await fetch('http://localhost:3000/token');
         const tokenData = await tokenRes.json();
         const accessToken = tokenData.access_token;
 
-        // 2️⃣ Usa o token pra buscar dados de um artista (ex: Ed Sheeran)
-        const artistId = '6eUKZXaKkcviH0Ku9w2n3V'; // Ed Sheeran
+        // 2️⃣ Lista de IDs dos artistas que você quer buscar
+        const artistIds = [
+          '4MCBfE4596Uoi2O4DtmEMz', // Juice WRLD
+          '1uNFoZAHBGtllmzznpCI3s', // Justin Bieber
+          '06HL4z0CvFAxyc27GXpf02', // Taylor Swift
+          '4dpARuHxo51G3z768sgnrY', // Adele
+          '3TVXtAsR1Inumwj472S9r4',  // Drake
+          '5xkAtLTf309LAGZTbvULBn'
+        ];
+
+        // 3️⃣ Buscar todos os artistas ao mesmo tempo (paralelo)
+        const artistPromises = artistIds.map(id => getSingleArtist(id, accessToken));
+        await Promise.all(artistPromises);
+
+      } catch (err) {
+        console.error('Erro ao buscar artistas:', err);
+      }
+    }
+
+    // Função para buscar um artista individual
+    async function getSingleArtist(artistId, accessToken) {
+      try {
         const artistRes = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
           headers: {
             'Authorization': `Bearer ${accessToken}`
           }
         });
         const artist = await artistRes.json();
-
-        // 3️⃣ Mostra os dados na página
-        const div = document.getElementById('artist-info');
-        div.innerHTML = `
-          <h2>${artist.name}</h2>
-          <p>Followers: ${artist.followers.total.toLocaleString()}</p>
-          <p>Genres: ${artist.genres.join(', ')}</p>
-          <img src="${artist.images[0].url}" width="200">
-        `;
+        
+        // Renderiza o artista na página
+        renderArtist(artist);
+        
       } catch (err) {
-        console.error(err);
+        console.error(`Erro ao buscar artista ${artistId}:`, err);
       }
     }
 
-    getArtistData();
+    // Função para renderizar um artista na página
+    function renderArtist(artist) {
+      const artistsCard = document.createElement('div');
+      artistsCard.classList.add('flex', 'flex-col', 'justify-between', 'items-center', 'bg-[#121212]', 'rounded-lg', 'p-4', 'shadow-lg', 'hover:bg-[#282828]', 'transition-colors', 'cursor-pointer');
+      
+      artistsCard.innerHTML = `
+        <div class="w-full h-52 mb-2">
+        <img src="${artist.images[0]?.url || 'placeholder.jpg'}" 
+             alt="${artist.name}" 
+             class="w-full h-full object-cover rounded-lg">
+        </div>
+        <h3 class="text-lg font-bold text-white mb-2">${artist.name}</h3>
+        <p class="text-sm text-gray-400 mb-2">${artist.followers.total.toLocaleString()} seguidores</p>
+        <p class="text-xs text-gray-500 text-center">${artist.genres.slice(0, 2).join(', ')}</p>
+      `;
+      
+      // Adiciona evento de clique para mostrar mais detalhes
+      artistsCard.addEventListener('click', () => {
+        showArtistDetails(artist);
+      });
+      
+      document.getElementById('container-artists').appendChild(artistsCard);
+    }
+
+    // Função para mostrar detalhes do artista
+    function showArtistDetails(artist) {
+      alert(`
+        Artista: ${artist.name}
+        Popularidade: ${artist.popularity}/100
+        Gêneros: ${artist.genres.join(', ')}
+        Seguidores: ${artist.followers.total.toLocaleString()}
+      `);
+    }
+
+    // ==================== FUNÇÕES PARA MÚSICAS ====================
+    
+    async function getTopSongsData() {
+      try {
+        // 1️⃣ Pega o token do nosso backend
+        const tokenRes = await fetch('http://localhost:3000/token');
+        const tokenData = await tokenRes.json();
+        const accessToken = tokenData.access_token;
+
+        // 2️⃣ Lista de IDs de músicas populares
+        const trackIds = [
+          '3T06rGO2dVEntMvym0vpQu', // Cut to the Feeling - Carly Rae Jepsen
+          '0INehbMZOFPnaPBAjK97i3', // Blinding Lights - The Weeknd  
+          '4uLU6hMCjMI75M1A2tKUQC', // Never Gonna Give You Up - Rick Astley
+          '7qiZfU4dY1lWllzX7mPBI3', // Shape of You - Ed Sheeran
+          '6habFhsOp2NvshLv26DqMb', // Bad Habits - Ed Sheeran
+          '5ChkMS8OtdzJeqyybCc9R5', // Good 4 U - Olivia Rodrigo
+          '0sf2ZTVnqkVLeRE3Ce4TVA', // Industry Baby - Lil Nas X
+          '7MXVkk9YMctZqd1Srtv4MB', // Starboy - The Weeknd
+        ];
+
+        // 3️⃣ Buscar todas as músicas ao mesmo tempo (paralelo)
+        const trackPromises = trackIds.map(id => getSingleTrack(id, accessToken));
+        await Promise.all(trackPromises);
+
+      } catch (err) {
+        console.error('Erro ao buscar músicas:', err);
+      }
+    }
+
+    // Função para buscar uma música individual
+    async function getSingleTrack(trackId, accessToken) {
+      try {
+        const trackRes = await fetch(`https://api.spotify.com/v1/tracks/${trackId}`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+        const track = await trackRes.json();
+        
+        // Renderiza a música na página
+        renderTrack(track);
+        
+      } catch (err) {
+        console.error(`Erro ao buscar música ${trackId}:`, err);
+      }
+    }
+
+    // Função para renderizar uma música na página
+    function renderTrack(track) {
+      const trackCard = document.createElement('div');
+      trackCard.classList.add('flex', 'flex-col', 'justify-between', 'items-center', 'bg-[#121212]', 'rounded-lg', 'p-4', 'shadow-lg', 'hover:bg-[#282828]', 'transition-colors', 'cursor-pointer');
+      
+      // Converte duração de ms para mm:ss
+      const duration = formatDuration(track.duration_ms);
+      
+      trackCard.innerHTML = `
+        <div class="w-full h-52 mb-2">
+          <img src="${track.album.images[0]?.url || 'placeholder.jpg'}" 
+               alt="${track.name}" 
+               class="w-full h-full object-cover rounded-lg">
+        </div>
+        <h3 class="text-lg font-bold text-white mb-1 text-center">${track.name}</h3>
+        <p class="text-sm text-gray-300 mb-2 text-center">${track.artists.map(artist => artist.name).join(', ')}</p>
+        <p class="text-xs text-gray-400 mb-1">${track.album.name}</p>
+        <div class="flex items-center gap-2 text-xs text-gray-500">
+          <span>🎵 ${duration}</span>
+          <span>⭐ ${track.popularity}/100</span>
+        </div>
+      `;
+      
+      // Adiciona evento de clique para mostrar mais detalhes
+      trackCard.addEventListener('click', () => {
+        showTrackDetails(track);
+      });
+      
+      document.getElementById('container-songs').appendChild(trackCard);
+    }
+
+    // Função para formatar duração (ms para mm:ss)
+    function formatDuration(ms) {
+      const minutes = Math.floor(ms / 60000);
+      const seconds = ((ms % 60000) / 1000).toFixed(0);
+      return `${minutes}:${seconds.padStart(2, '0')}`;
+    }
+
+    // Função para mostrar detalhes da música
+    function showTrackDetails(track) {
+      alert(`
+        Música: ${track.name}
+        Artista(s): ${track.artists.map(artist => artist.name).join(', ')}
+        Álbum: ${track.album.name}
+        Duração: ${formatDuration(track.duration_ms)}
+        Popularidade: ${track.popularity}/100
+        Lançamento: ${track.album.release_date}
+      `);
+    }
+
+    // ==================== INICIALIZAÇÃO ====================
+    
+    // Chama as funções para carregar os dados
+    getMultipleArtistsData();
+    getTopSongsData();
   </script>
 </body>
 </html>

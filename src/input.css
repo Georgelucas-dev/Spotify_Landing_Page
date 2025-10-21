@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Classe personalizada para botões do menu */
+.menu-button {
+  @apply w-full h-16 transition-all border-l-4 border-transparent duration-300 hover:bg-[#212121] hover:border-l-4 hover:border-[#1db954] hover:transform;
+}
